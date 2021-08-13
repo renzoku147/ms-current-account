@@ -1,5 +1,16 @@
 package com.everis.mscurrentaccount.entity;
 
-public enum TypeCustomer {
-    PERSONAL, EMPRESARIAL
+import lombok.Data;
+
+@Data
+public class TypeCustomer {
+    String id;
+
+    EnumTypeCustomer value;
+
+    SubType subType;
+
+    public enum EnumTypeCustomer {
+        EMPRESARIAL, PERSONAL
+    }
 }

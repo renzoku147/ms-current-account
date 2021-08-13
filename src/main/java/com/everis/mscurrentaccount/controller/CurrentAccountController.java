@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 
 @RefreshScope
@@ -22,8 +23,6 @@ import java.time.LocalDateTime;
 @RequestMapping("/currentAccount")
 @Slf4j
 public class CurrentAccountController {
-
-    WebClient webClient = WebClient.create("http://localhost:8013/customer");
 
     @Autowired
     CurrentAccountService currentAccountService;
@@ -39,25 +38,42 @@ public class CurrentAccountController {
     }
 
     @PostMapping("/create")
-    public Mono<ResponseEntity<CurrentAccount>> create(@RequestBody CurrentAccount currentAccount){
+    public Mono<ResponseEntity<CurrentAccount>> create(@Valid @RequestBody CurrentAccount currentAccount){
         // VERIFICAMOS SI EXISTE EL CLIENTE
-        Mono<Customer> customer = webClient.get().uri("/find/{id}", currentAccount.getCustomer().getId())
-                                    .accept(MediaType.APPLICATION_JSON)
-                                    .retrieve()
-                                    .bodyToMono(Customer.class);
-                    //Mono<Customer>
-        return customer.flatMap(cst -> {
-                    return currentAccountService.countCustomerAccountBank(currentAccount.getCustomer().getId()) // Mono<Long>
+        return currentAccountService.findCustomerById(currentAccount.getCustomer().getId())
+                .flatMap(cst -> {
+                    return currentAccountService.countCustomerAccountBank(currentAccount.getCustomer().getId()) // Mono<Long> # Cuentas bancarias del Cliente
                         .filter(count -> {
-                            if(cst.getTypeCustomer().equals(TypeCustomer.PERSONAL)) return count < 1; // MAX 1
-                            else {
-                                return currentAccount != null & currentAccount.getHolders().size() > 0;
+                            switch (cst.getTypeCustomer().getValue()){
+                                case PERSONAL:
+                                    return count < 1; // max 1 Cuenta por Cliente PERSONAL
+
+                                case EMPRESARIAL:
+                                    return currentAccount.getHolders() != null & currentAccount.getHolders().size() > 0; // Cliente EMPRESARIAL debe tener 1 o mas titulares
+
+                                default: return false;
                             }
                         })
                         .flatMap(c -> {
-                            currentAccount.setCustomer(cst);
-                            currentAccount.setDate(LocalDateTime.now());
-                            return currentAccountService.create(currentAccount); // Mono<CurrentAccount>
+                            switch (cst.getTypeCustomer().getValue()){
+                                case EMPRESARIAL:
+                                    switch (cst.getTypeCustomer().getSubType().getValue()){
+                                        case PYME: return currentAccountService.findCreditCardByCustomerId(cst.getId())
+                                                .count()
+                                                .filter(cntCCard -> cntCCard > 0)
+                                                .flatMap(cntCCard -> {
+                                                    currentAccount.setCustomer(cst);
+                                                    currentAccount.setDate(LocalDateTime.now());
+                                                    currentAccount.setCommissionMaintenance(0.0);
+                                                    return currentAccountService.create(currentAccount);
+                                                });
+                                    }
+
+                                default: currentAccount.setCustomer(cst);
+                                        currentAccount.setDate(LocalDateTime.now());
+                                        return currentAccountService.create(currentAccount); // Mono<CurrentAccount>
+                            }
+
                         });
                 })
                 .map(ca -> new ResponseEntity<>(ca, HttpStatus.CREATED))

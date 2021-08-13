@@ -24,12 +24,21 @@ public class CurrentAccount {
     private Customer customer;
 
     @NotNull
+    private String cardNumber;
+
+    @NotNull
     private List<Person> holders;
 
     private List<Person> signers;
 
     @NotNull
-    private Double maintenanceCommission;
+    private Integer freeTransactions;
+
+    @NotNull
+    private Double commissionTransactions;
+
+    @NotNull
+    private Double commissionMaintenance;
 
     @NotNull
     private Double balance;
