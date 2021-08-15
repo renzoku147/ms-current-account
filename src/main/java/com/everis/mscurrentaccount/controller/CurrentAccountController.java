@@ -82,11 +82,31 @@ public class CurrentAccountController {
     }
 
     @PutMapping("/update")
-    public Mono<ResponseEntity<CurrentAccount>> update(@RequestBody CurrentAccount c) {
-        return currentAccountService.update(c)
-                .filter(ca -> ca.getBalance() >= 0)
-                .map(savedCustomer -> new ResponseEntity<>(savedCustomer, HttpStatus.CREATED))
-                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public Mono<ResponseEntity<CurrentAccount>> update(@RequestBody CurrentAccount currentAccount) {
+        return currentAccountService.findCustomerById(currentAccount.getCustomer().getId())
+                .filter(customer -> currentAccount.getBalance() >= 0)
+                .flatMap(customer -> {
+                    switch (customer.getTypeCustomer().getValue()){
+                        case EMPRESARIAL:
+                            switch (customer.getTypeCustomer().getSubType().getValue()){
+                                case PYME: return currentAccountService.findCreditCardByCustomerId(customer.getId())
+                                        .count()
+                                        .filter(cntCCard -> cntCCard > 0)
+                                        .flatMap(cntCCard -> {
+                                            currentAccount.setCustomer(customer);
+                                            currentAccount.setDate(LocalDateTime.now());
+                                            currentAccount.setCommissionMaintenance(0.0);
+                                            return currentAccountService.create(currentAccount);
+                                        });
+                            }
+
+                        default: currentAccount.setCustomer(customer);
+                            currentAccount.setDate(LocalDateTime.now());
+                            return currentAccountService.create(currentAccount); // Mono<CurrentAccount>
+                    }
+                })
+                .map(ca -> new ResponseEntity<>(ca, HttpStatus.CREATED))
+                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
 
     @DeleteMapping("/delete/{id}")

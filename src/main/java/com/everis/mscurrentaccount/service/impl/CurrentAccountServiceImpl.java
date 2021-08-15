@@ -15,9 +15,9 @@ import reactor.core.publisher.Mono;
 @Service
 public class CurrentAccountServiceImpl implements CurrentAccountService {
 
-    WebClient webClientCustomer = WebClient.create("http://localhost:8013/customer");
+    WebClient webClientCustomer = WebClient.create("http://localhost:8887/ms-customer/customer/customer");
 
-    WebClient webClientCreditCard = WebClient.create("http://localhost:8041/creditcard");
+    WebClient webClientCreditCard = WebClient.create("http://localhost:8887/ms-creditcard/creditcard/creditcard");
 
     @Autowired
     CurrentAccountRepository currentAccountRepository;
