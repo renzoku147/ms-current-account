@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @RefreshScope
 @RestController
@@ -115,5 +116,17 @@ public class CurrentAccountController {
                 .filter(deleteCustomer -> deleteCustomer)
                 .map(deleteCustomer -> new ResponseEntity<>("Customer Deleted", HttpStatus.ACCEPTED))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/findByAccountNumber/{number}")
+    public Mono<CurrentAccount> findByAccountNumber(@PathVariable String number){
+        return currentAccountService.findByCardNumber(number);
+    }
+
+    @PutMapping("/updateTransference")
+    public Mono<ResponseEntity<CurrentAccount>> updateForTransference(@Valid @RequestBody CurrentAccount currentAccount) {
+        return currentAccountService.create(currentAccount)
+                .filter(customer -> currentAccount.getBalance() >= 0)
+                .map(ft -> new ResponseEntity<>(ft, HttpStatus.CREATED));
     }
 }

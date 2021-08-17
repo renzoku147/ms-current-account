@@ -70,5 +70,10 @@ public class CurrentAccountServiceImpl implements CurrentAccountService {
                 .bodyToFlux(CreditCard.class);
     }
 
+    @Override
+    public Mono<CurrentAccount> findByCardNumber(String number) {
+        return currentAccountRepository.findByCardNumber(number);
+    }
+
 
 }

@@ -22,4 +22,6 @@ public interface CurrentAccountService {
     Mono<Customer> findCustomerById(String id);
 
     Flux<CreditCard> findCreditCardByCustomerId(String id);
+
+    Mono<CurrentAccount> findByCardNumber(String number);
 }
