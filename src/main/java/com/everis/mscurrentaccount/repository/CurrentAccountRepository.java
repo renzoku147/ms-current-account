@@ -10,5 +10,5 @@ public interface CurrentAccountRepository extends ReactiveMongoRepository<Curren
 
     public Flux<CurrentAccount> findByCustomerId(String id);
 
-    Mono<CurrentAccount> findByCardNumber(String number);
+    Mono<CurrentAccount> findByAccountNumber(String number);
 }

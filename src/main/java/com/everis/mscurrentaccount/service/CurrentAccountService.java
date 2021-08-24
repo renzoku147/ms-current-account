@@ -1,5 +1,8 @@
 package com.everis.mscurrentaccount.service;
 
+import java.util.Optional;
+
+import com.everis.mscurrentaccount.entity.BankAccount;
 import com.everis.mscurrentaccount.entity.CreditCard;
 import com.everis.mscurrentaccount.entity.CurrentAccount;
 import com.everis.mscurrentaccount.entity.Customer;
@@ -17,11 +20,17 @@ public interface CurrentAccountService {
 
     Mono<Boolean> delete(String t);
 
-    Mono<Long> countCustomerAccountBank(String id);
+    Mono<Long> countAccountBank(String id);
 
     Mono<Customer> findCustomerById(String id);
+    
+    Flux<CurrentAccount> findAccountByCustomerId(String idcustomer);
 
     Flux<CreditCard> findCreditCardByCustomerId(String id);
 
-    Mono<CurrentAccount> findByCardNumber(String number);
+    Mono<CurrentAccount> findByAccountNumber(String number);
+    
+    Mono<Optional<BankAccount>> verifyAccountNumber(String accountNumber);
+    
+    Mono<Boolean> verifyExpiredDebt(String idcustomer);
 }
