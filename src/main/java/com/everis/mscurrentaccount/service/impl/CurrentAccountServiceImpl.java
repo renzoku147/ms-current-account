@@ -65,7 +65,8 @@ public class CurrentAccountServiceImpl implements CurrentAccountService {
     
     @Override
     public Mono<CurrentAccount> update(CurrentAccount t) {
-        return currentAccountRepository.save(t);
+        return currentAccountRepository.save(t)
+        		.filter(ca -> ca.getBalance()>0);
     }
 
     @Override

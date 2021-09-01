@@ -8,6 +8,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaTemplate;
 
+import com.everis.mscurrentaccount.entity.BootCoinRequest;
+import com.everis.mscurrentaccount.entity.BootCoinTransfer;
 import com.everis.mscurrentaccount.entity.CurrentAccount;
 import com.everis.mscurrentaccount.service.CurrentAccountService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +39,36 @@ public class ConsumidorKafkaApplication {
     	System.out.println(ca);
     	
     	currentAccountService.update(ca).subscribe();
+        	
+    }
+    
+    @KafkaListener(id="myId2", topics = "topico-everis7")
+    public void listen2(String message) throws Exception{
+    	System.out.println(">>>>> topico-everis7 @KafkaListener <<<<<");
+    	BootCoinRequest bcr = objectMapper.readValue(message, BootCoinRequest.class);
+    	System.out.println(">>> CurrentAccount <<< " + bcr.getAccountNumber());
+    	
+    	currentAccountService.findByAccountNumber(bcr.getAccountNumber())
+    		.flatMap(currentAccount -> {
+    					currentAccount.setBalance(currentAccount.getBalance()-bcr.getAmount()*bcr.getExchangeRate());
+    					return currentAccountService.update(currentAccount);
+    				})
+    		.subscribe();
+        	
+    }
+    
+    @KafkaListener(id="myId3", topics = "topico-everis8")
+    public void listen3(String message) throws Exception{
+    	System.out.println(">>>>> topico-everis8 @KafkaListener <<<<<");
+    	BootCoinTransfer bcr = objectMapper.readValue(message, BootCoinTransfer.class);
+    	System.out.println(">>> CurrentAccount <<< " + bcr.getAccountNumber());
+    	
+    	currentAccountService.findByAccountNumber(bcr.getAccountNumber())
+    		.flatMap(currentAccount -> {
+    					currentAccount.setBalance(currentAccount.getBalance()+bcr.getBuyer().getAmount()*bcr.getBuyer().getExchangeRate());
+    					return currentAccountService.update(currentAccount);
+    				})
+    		.subscribe();
         	
     }
 }
